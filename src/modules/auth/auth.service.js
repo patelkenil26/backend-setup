@@ -73,7 +73,12 @@ const login = async ({ email, password }) => {
 const refresh = async (token) => {
   if (!token) throw ApiError.unauthorized("Refresh token missing");
 
-  const decoded = verifyRefreshToken(token);
+  let decoded;
+  try {
+    decoded = verifyRefreshToken(token);
+  } catch (err) {
+    throw ApiError.unauthorized("Invalid or expired refresh token");
+  }
 
   const user = await User.findById(decoded.id).select("+refreshToken");
   if (!user) throw ApiError.unauthorized("User no longer exists");
@@ -106,11 +111,12 @@ const verifyEmail = async (token) => {
   let user = await User.findOne({ verificationToken: hashedInput }).select(
     "+verificationToken",
   );
-  if (!user) {
-    user = await User.findOne({ verificationToken: trimmed }).select(
-      "+verificationToken",
-    );
-  }
+  // fallback for developer testing purpose only code
+  // if (!user) {
+  //   user = await User.findOne({ verificationToken: trimmed }).select(
+  //     "+verificationToken",
+  //   );
+  // }
   if (!user) throw ApiError.badRequest("Invalid or expired verification token");
 
   await User.findByIdAndUpdate(user._id, {
