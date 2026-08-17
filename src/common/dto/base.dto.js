@@ -1,4 +1,4 @@
-import joi from "joi";
+import Joi from "joi";
 
 class BaseDto {
   static schema = Joi.object({});
